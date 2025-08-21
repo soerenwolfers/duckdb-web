@@ -1,13 +1,14 @@
 ---
 layout: post
-title:  "DuckDB-Wasm: Efficient Analytical SQL in the Browser"
+title: "DuckDB-Wasm: Efficient Analytical SQL in the Browser"
 author: André Kohn and Dominik Moritz
 excerpt: "[DuckDB-Wasm](https://github.com/duckdb/duckdb-wasm) is an in-process analytical SQL database for the browser. It is powered by WebAssembly, speaks Arrow fluently, reads Parquet, CSV and JSON files backed by Filesystem APIs or HTTP requests and has been tested with Chrome, Firefox, Safari and Node.js. You can try it in your browser at [shell.duckdb.org](https://shell.duckdb.org) or on [Observable](https://observablehq.com/@cmudig/duckdb)."
+tags: ["using DuckDB"]
 ---
 
 <img src="/images/blog/duckdb_wasm.svg"
      alt="DuckDB-Wasm logo"
-     width=240
+     width="240"
      />
 
 *DuckDB-Wasm is fast! If you're here for performance numbers, head over to our benchmarks at [shell.duckdb.org/versus](https://shell.duckdb.org/versus).*
@@ -27,14 +28,14 @@ The processing capabilities of browsers were boosted tremendously 4 years ago wi
 > 
 > (ref: [https://webassembly.org/](https://webassembly.org/))
 
-Four years later, the WebAssembly revolution is in full progress with first implementations being shipped in four major browsers. It has already brought us [game engines](https://blog.unity.com/technology/webassembly-is-here), [entire IDEs](https://blog.stackblitz.com/posts/introducing-webcontainers/) and even a browser version of [Photoshop](https://web.dev/ps-on-the-web/). Today, we join the ranks with a first release of the npm library [@duckdb/duckdb-wasm](https://www.npmjs.com/package/@duckdb/duckdb-wasm).
+Four years later, the WebAssembly revolution is in full progress with first implementations being shipped in four major browsers. It has already brought us game engines, [entire IDEs](https://blog.stackblitz.com/posts/introducing-webcontainers/) and even a browser version of [Photoshop](https://web.dev/ps-on-the-web/). Today, we join the ranks with a first release of the npm library [@duckdb/duckdb-wasm](https://www.npmjs.com/package/@duckdb/duckdb-wasm).
 
 As an in-process analytical database, DuckDB has the rare opportunity to siginificantly speed up OLAP workloads in the browser. We believe that there is a need for a comprehensive and self-contained data analysis library. DuckDB-wasm automatically offloads your queries to dedicated worker threads and reads Parquet, CSV and JSON files from either your local filesystem or HTTP servers driven by plain SQL input.
 In this blog post, we want to introduce the library and present challenges on our journey towards a browser-native OLAP database.
 
 *DuckDB-Wasm is not yet stable. You will find rough edges and bugs in this release. Please share your thoughts with us [on GitHub](https://github.com/duckdb/duckdb-wasm/discussions).*
 
-## How to get data in?
+## How to Get Data In?
 
 Let's dive into examples.
 DuckDB-Wasm provides a variety of ways to load your data. First, raw SQL value clauses like `INSERT INTO sometable VALUES (1, 'foo'), (2, 'bar')` are easy to formulate and only depend on plain SQL text. Alternatively, SQL statements like `CREATE TABLE foo AS SELECT * FROM 'somefile.parquet'` consult our integrated web filesystem to resolve `somefile.parquet` locally, remotely or from a buffer. The methods `insertCSVFromPath` and `insertJSONFromPath` further provide convenient ways to import CSV and JSON files using additional typed settings like column types. And finally, the method `insertArrowFromIPCStream` (optionally through `insertArrowTable`, `insertArrowBatches` or `insertArrowVectors`) copies raw IPC stream bytes directly into a WebAssembly stream decoder.
@@ -101,14 +102,14 @@ await db.registerFileURL("remote.parquet", "https://origin/remote.parquet");
 // ..., by specifying URLs in the SQL text
 await c.query(`
     CREATE TABLE direct AS
-        SELECT * FROM "https://origin/remote.parquet"
+        SELECT * FROM 'https://origin/remote.parquet'
 `);
 // ..., or by executing raw insert statements
 await c.query(`INSERT INTO existing_table
     VALUES (1, "foo"), (2, "bar")`);
 ```
 
-## How to get data out?
+## How to Get Data Out?
 
 Now that we have the data loaded, DuckDB-Wasm can run queries on two different ways that differ in the result materialization. First, the method `query` runs a query to completion and returns the results as single `arrow.Table`. Second, the method `send` fetches query results lazily through an `arrow.RecordBatchStreamReader`. Both methods are generic and allow for typed results in Typescript:
 
@@ -127,10 +128,10 @@ for await (const batch of await conn.send<{ v: arrow.Int32 }>(`
 
 Alternatively, you can prepare statements for parameterized queries using:
 
-``` ts
+```ts
 // Prepare query
 const stmt = await conn.prepare<{ v: arrow.Int32 }>(
-    `SELECT (v + ?) as v FROM generate_series(0, 10000) as t(v);`
+    `SELECT (v + ?) AS v FROM generate_series(0, 10000) t(v);`
 );
 // ... and run the query with materialized results
 await stmt.query(234);
@@ -140,7 +141,7 @@ for await (const batch of await stmt.send(234)) {
 }
 ```
 
-## Looks like Arrow to me
+## Looks like Arrow to Me
 
 DuckDB-Wasm uses [Arrow](https://arrow.apache.org) as data protocol for the data import and all query results. Arrow is a database-friendly columnar format that is organized in chunks of column vectors, called record batches and that support zero-copy reads with only a small overhead. The npm library `apache-arrow` implements the Arrow format in the browser and is already used by other data processing frameworks, like [Arquero](https://github.com/uwdata/arquero). Arrow therefore not only spares us the implementation of the SQL type logic in JavaScript, it also makes us compatible to existing tools.
 
@@ -233,7 +234,7 @@ await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
 
 ## Multithreading
 
-In 2018, the Spectre and Meltdown vulnerabilities sent crippling shockwaves through the internet. Today, we are facing the repercussions of these events, in particular in software that runs arbitrary user code - such as web browsers. Shortly after the publications, all major browser vendors restricted the use of `SharedArrayBuffers` to prevent dangerous timing attacks. `SharedArrayBuffers` are raw buffers that can be shared among web workers for global state and an alternative to the browser-specific message passing. These restrictions had detrimental effects on WebAssembly modules since  `SharedArrayBuffers` are neccessary for the implementation of POSIX threads in WebAssembly.
+In 2018, the Spectre and Meltdown vulnerabilities sent crippling shockwaves through the internet. Today, we are facing the repercussions of these events, in particular in software that runs arbitrary user code – such as web browsers. Shortly after the publications, all major browser vendors restricted the use of `SharedArrayBuffers` to prevent dangerous timing attacks. `SharedArrayBuffers` are raw buffers that can be shared among web workers for global state and an alternative to the browser-specific message passing. These restrictions had detrimental effects on WebAssembly modules since  `SharedArrayBuffers` are neccessary for the implementation of POSIX threads in WebAssembly.
 
 Without `SharedArrayBuffers`, WebAssembly modules can run in a dedicated web worker to unblock the main event loop but won't be able to spawn additional workers for parallel computations within the same instance. By default, we therefore cannot unleash the parallel query execution of DuckDB in the web. However, browser vendors have recently started to reenable `SharedArrayBuffers` for websites that are [cross-origin-isolated](https://web.dev/coop-coep/). A website is cross-origin-isolated if it ships the main document with the following HTTP headers:
 
@@ -256,29 +257,39 @@ You can alternatively use the `.files` command to register files from the local 
 ```sql
 .timer on
 
-select count(*) from 'https://shell.duckdb.org/data/tpch/0_01/parquet/lineitem.parquet';
-select count(*) from 'https://shell.duckdb.org/data/tpch/0_01/parquet/customer.parquet';
-select avg(c_acctbal) from 'https://shell.duckdb.org/data/tpch/0_01/parquet/customer.parquet';
+SELECT count(*)
+FROM 'https://blobs.duckdb.org/data/tpch-sf0.01-parquet/lineitem.parquet';
 
-select * from 'https://shell.duckdb.org/data/tpch/0_01/parquet/orders.parquet' limit 10;
+SELECT count(*)
+FROM 'https://blobs.duckdb.org/data/tpch-sf0.01-parquet/customer.parquet';
 
-select n_name, avg(c_acctbal) from
-  'https://shell.duckdb.org/data/tpch/0_01/parquet/customer.parquet',
-  'https://shell.duckdb.org/data/tpch/0_01/parquet/nation.parquet'
-where c_nationkey = n_nationkey group by n_name;
+SELECT avg(c_acctbal)
+FROM 'https://blobs.duckdb.org/data/tpch-sf0.01-parquet/customer.parquet';
 
-select * from
-  'https://shell.duckdb.org/data/tpch/0_01/parquet/region.parquet',
-  'https://shell.duckdb.org/data/tpch/0_01/parquet/nation.parquet'
-where r_regionkey = n_regionkey;
+SELECT *
+FROM 'https://blobs.duckdb.org/data/tpch-sf0.01-parquet/orders.parquet'
+LIMIT 10;
+
+SELECT n_name, avg(c_acctbal)
+FROM
+    'https://blobs.duckdb.org/data/tpch-sf0.01-parquet/customer.parquet',
+    'https://blobs.duckdb.org/data/tpch-sf0.01-parquet/nation.parquet'
+WHERE c_nationkey = n_nationkey
+GROUP BY n_name;
+
+SELECT *
+FROM
+    'https://blobs.duckdb.org/data/tpch-sf0.01-parquet/region.parquet',
+    'https://blobs.duckdb.org/data/tpch-sf0.01-parquet/nation.parquet'
+WHERE r_regionkey = n_regionkey;
 ```
 
 ## Evaluation
 
-The following table teases the execution times of some TPC-H queries at scale factor 0.5 using the libraries [DuckDB-Wasm](https://www.npmjs.com/package/@duckdb/duckdb-wasm), [sql.js](https://github.com/sql-js/sql.js/), [Arquero](https://github.com/uwdata/arquero) and [Lovefield](https://github.com/google/lovefield). You can find a more in-depth discussion with all TPC-H queries, additional scale factors and Microbenchmarks [here](https://shell.duckdb.org/versus).
+The following table teases the execution times of some TPC-H queries at scale factor 0.5 using the libraries [DuckDB-Wasm](https://www.npmjs.com/package/@duckdb/duckdb-wasm), [sql.js](https://github.com/sql-js/sql.js/), [Arquero](https://github.com/uwdata/arquero) and [Lovefield](https://github.com/google/lovefield). You can find a more in-depth discussion with all TPC-H queries, additional scale factors and microbenchmarks on the [“DuckDB-Wasm versus X” page](https://shell.duckdb.org/versus).
 
-| Query | DuckDB-wasm | sql.js | Arquero | Lovefield |
-|:--|--:|--:|--:|--:|
+| Query | DuckDB-Wasm | sql.js | Arquero | Lovefield |
+|--:|--:|--:|--:|--:|
 | 1 | **0.855 s** | 8.441 s | 24.031 s | 12.666 s |
 | 3 | **0.179 s** | 1.758 s | 16.848 s | 3.587 s |
 | 4 | **0.151 s** | 0.384 s | 6.519 s | 3.779 s |
@@ -296,4 +307,3 @@ The following table teases the execution times of some TPC-H queries at scale fa
 ## Future Research
 
 We believe that WebAssembly unveils hitherto dormant potential for shared query processing between clients and servers. Pushing computation closer to the client can eliminate costly round-trips to the server and thus increase interactivity and scalability of in-browser analytics. We further believe that the release of DuckDB-Wasm could be the first step towards a more universal data plane spanning across multiple layers including traditional database servers, clients, CDN workers and computational storage. As an in-process analytical database, DuckDB might be the ideal driver for distributed query plans that increase the scalability and interactivity of SQL databases at low costs.
-

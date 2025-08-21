@@ -1,16 +1,33 @@
-const xhr = new XMLHttpRequest();
-xhr.open('GET', '/data/search_data.json');
-xhr.onreadystatechange = function(event) {
-	if (this.readyState === 4) {
-		const { data } = JSON.parse(this.responseText);
-		let documents = data.map((item, id) => ({id, ...item}));
+let searchDataLoaded = false; // Flag to prevent multiple loads
 
-		// Add documents to the index
-		miniSearch.addAll(documents)
-		miniPredictor.addAll(documents);
-	}
+function loadSearchData() {
+	if (searchDataLoaded) return; // Skip if already loaded
+
+	const xhr = new XMLHttpRequest();
+	xhr.open('GET', '/data/search_data.json');
+	xhr.setRequestHeader('Accept-Encoding', 'gzip, deflate');
+	xhr.onreadystatechange = function(event) {
+		if (this.readyState === 4) {
+			const { data } = JSON.parse(this.responseText);
+			let documents = data.map((item, id) => ({id, ...item}));
+
+			// Add documents to the index
+			miniSearch.addAll(documents);
+			miniPredictor.addAll(documents);
+
+			searchDataLoaded = true; // Mark data as loaded
+			
+			console.log("search_data.json successfully loaded and indexed.");
+		}
+	};
+	xhr.send();
 }
-xhr.send();
+
+// Event listeners to load search data only on interaction
+const text_div = document.getElementById("q");
+text_div.addEventListener('focus', loadSearchData);
+text_div.addEventListener('input', loadSearchData);
+text_div.addEventListener('keydown', loadSearchData);
 
 const tokenize = (string) => string.split(/[\s-.]+/); // search query tokenizer
 
@@ -19,7 +36,7 @@ const tokenize = (string) => string.split(/[\s-.]+/); // search query tokenizer
 // id field, that is always stored and returned)
 const miniSearch = new MiniSearch({
 	fields: ['title', 'text', 'category', 'blurb'],
-	storeFields: ['title', 'text', 'category', 'url', 'blurb'],
+	storeFields: ['title', 'text', 'category', 'url', 'blurb', 'type'],
 	tokenize,
 	searchOptions: { tokenize }
 })
@@ -64,9 +81,29 @@ function bold_blurb(blurb, query) {
 	return blurb
 }
 
+// Check what page we are
+let currentPageType = 'all'; 
+if (window.location.pathname.includes('/docs/')) {
+	currentPageType = 'documentation';
+} else if (window.location.pathname.includes('/news/')) {
+	currentPageType = 'blog';
+}
+
 function perform_search(query) {
-	// Search for documents:
-	let results = miniSearch.search(query, { boost: { title: 100, category: 20, blurb: 2 }, prefix: true, fuzzy: 0.2});
+	let searchOptions = {
+		boost: { title: 100, category: 20, blurb: 2 },
+		prefix: true,
+		fuzzy: 0.2
+	};
+	
+	// Filter search results depening on what page we are
+	if (currentPageType === 'documentation') {
+		searchOptions.filter = (doc) => doc.type === 'documentation';
+	} else if (currentPageType === 'blog') {
+		searchOptions.filter = (doc) => doc.type === 'blog';
+	}
+	
+	let results = miniSearch.search(query, searchOptions);
 	let search_div = document.getElementById("search_results");
 	let search_html = "";
 	let max_index = 20;
@@ -77,7 +114,7 @@ function perform_search(query) {
 		} else {
 			search_html += "search_result_uneven";
 		}
-		search_html += "'>"
+		search_html += "'>";
 		search_html += "<a href='" + results[i].url + "'>";
 		search_html += "</a> ";
 		search_html += "<h2 class='search_title'>";
@@ -106,7 +143,6 @@ function on_update(e) {
 	perform_search(e.target.value);
 }
 
-let text_div = document.getElementById("q");
 text_div.addEventListener('keyup', on_update);
 text_div.addEventListener('input', on_update);
 
@@ -115,7 +151,7 @@ text_div.addEventListener('input', on_update);
 inp = document.getElementById("q")
 const miniPredictor = new MiniSearch({
 	fields: ['title', 'category', 'blurb'],
-	storeFields: ['title', 'category', 'blurb'],
+	storeFields: ['title', 'category', 'blurb', 'type'],
 	tokenize,
 	searchOptions: { tokenize }
 })
@@ -217,7 +253,7 @@ function addActive(x) {
 function removeActive(x) {
 	/*a function to remove the "active" class from all autocomplete items:*/
 	for (var i = 0; i < x.length; i++) {
-	x[i].classList.remove("autocomplete-active");
+		x[i].classList.remove("autocomplete-active");
 	}
 }
 function closeAllLists(elmnt) {

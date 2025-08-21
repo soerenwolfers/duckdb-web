@@ -1,14 +1,16 @@
 ---
 layout: post
-title:  "Multi-Database Support in DuckDB"
+title: "Multi-Database Support in DuckDB"
 author: Mark Raasveldt
-thumb: "/images/blog/thumbs/240126.png"
+thumb: "/images/blog/thumbs/multi-database-support.svg"
+image: "/images/blog/thumbs/multi-database-support.png"
 excerpt: DuckDB can attach MySQL, Postgres, and SQLite databases in addition to databases stored in its own format. This allows data to be read into DuckDB and moved between these systems in a convenient manner.
+tags: ["extensions"]
 ---
 
 <img src="/images/blog/duckdb-multidb-support.png"
      alt="DuckDB supports reading and writing to MySQL, Postgres, and SQLite"
-     width=700
+     width="700"
 />
 
 In modern data analysis, data must often be combined from a wide variety of different sources. Data might sit in CSV files on your machine, in Parquet files in a data lake, or in an operational database. DuckDB has strong support for moving data between many different data sources. However, this support has previously been limited to reading data and writing data to files.
@@ -17,7 +19,7 @@ DuckDB supports advanced operations on its own native storage format – such as
 
 DuckDB now has a pluggable storage and transactional layer. This flexible layer allows new storage back-ends to be created by DuckDB extensions. These storage back-ends can support all database operations in the same way that DuckDB supports them, including inserting data and even modifying schemas.
 
-The [MySQL](/docs/extensions/mysql), [Postgres](/docs/extensions/postgres), and [SQLite](/docs/extensions/sqlite) extensions implement this new pluggable storage and transactional layer, allowing DuckDB to connect to those systems and operate on them in the same way that it operates on its own native storage engine.
+The [MySQL]({% link docs/stable/core_extensions/mysql.md %}), [Postgres]({% link docs/stable/core_extensions/postgres.md %}), and [SQLite]({% link docs/stable/core_extensions/sqlite.md %}) extensions implement this new pluggable storage and transactional layer, allowing DuckDB to connect to those systems and operate on them in the same way that it operates on its own native storage engine.
 
 These extensions enable a number of useful features. For example, using these extensions you can:
 
@@ -30,14 +32,15 @@ These extensions enable a number of useful features. For example, using these ex
 
 ## Attaching Databases
 
-The [`ATTACH` statement](/docs/sql/statements/attach) can be used to attach a new database to the system. By default, a native DuckDB file will be attached. The `TYPE` parameter can be used to specify a different storage type. Alternatively, the `{type}:` prefix can be used.
+The [`ATTACH` statement]({% link docs/stable/sql/statements/attach.md %}) can be used to attach a new database to the system. By default, a native DuckDB file will be attached. The `TYPE` parameter can be used to specify a different storage type. Alternatively, the `{type}:` prefix can be used.
 
-For example, using the SQLite extension, we can open [a SQLite database file](https://github.com/duckdb/sqlite_scanner/raw/main/data/db/sakila.db) and query it as we would query a DuckDB database.
+For example, using the SQLite extension, we can open [a SQLite database file](https://github.com/duckdb/duckdb-sqlite/raw/main/data/db/sakila.db) and query it as we would query a DuckDB database.
 
 ```sql
 ATTACH 'sakila.db' AS sakila (TYPE sqlite);
 SELECT title, release_year, length FROM sakila.film LIMIT 5;
 ```
+
 ```text
 ┌──────────────────┬──────────────┬────────┐
 │      title       │ release_year │ length │
@@ -57,6 +60,7 @@ The `USE` command switches the main database.
 USE sakila;
 SELECT first_name, last_name FROM actor LIMIT 5;
 ```
+
 ```text
 ┌────────────┬──────────────┐
 │ first_name │  last_name   │
@@ -83,6 +87,7 @@ The `duckdb_databases` table contains a list of all attached databases and their
 ```sql
 SELECT database_name, path, type FROM duckdb_databases;
 ```
+
 ```text
 ┌───────────────┬───────────┬─────────┐
 │ database_name │   path    │  type   │
@@ -119,6 +124,7 @@ JOIN sqlite.film_actor ON (film.film_id = film_actor.film_id)
 JOIN postgres.actor ON (actor.actor_id = film_actor.actor_id)
 WHERE title = 'ACE GOLDFINGER';
 ```
+
 ```text
 ┌────────────┬───────────┐
 │ first_name │ last_name │
@@ -174,6 +180,7 @@ BEGIN;
 TRUNCATE film;
 SELECT title, release_year, length FROM film;
 ```
+
 ```text
 ┌─────────┬──────────────┬────────┐
 │  title  │ release_year │ length │
@@ -182,10 +189,12 @@ SELECT title, release_year, length FROM film;
 │             0 rows              │
 └─────────────────────────────────┘
 ```
+
 ```sql
 ROLLBACK;
 SELECT title, release_year, length FROM film LIMIT 5;
 ```
+
 ```text
 ┌──────────────────┬──────────────┬────────┐
 │      title       │ release_year │ length │
@@ -211,18 +220,19 @@ For that reason, it is currently not supported to **write** to multiple attached
 
 ```sql
 BEGIN;
-CREATE TABLE postgres.new_table(i INT);
-CREATE TABLE mysql.new_table(i INT);
+CREATE TABLE postgres.new_table (i INTEGER);
+CREATE TABLE mysql.new_table (i INTEGER);
 ```
-```text
+
+```console
 Error: Attempting to write to database "mysql" in a transaction that has
 already modified database "postgres" – a single transaction can only write
 to a single attached database.
 ```
 
-## Copying Data Between Databases
+## Copying Data between Databases
 
-`CREATE TABLE AS`, `INSERT INTO` and `COPY` can be used to copy data between different attached databases. The dedicated [`COPY FROM DATABASE ... TO`](https://duckdb.org/docs/sql/statements/copy.html#copy-from-database--to) can be used to copy all data from one database to another. This includes all tables and views that are stored in the source database.
+`CREATE TABLE AS`, `INSERT INTO` and `COPY` can be used to copy data between different attached databases. The dedicated [`COPY FROM DATABASE ... TO`]({% link docs/stable/sql/statements/copy.md %}#copy-from-database--to) can be used to copy all data from one database to another. This includes all tables and views that are stored in the source database.
 
 ```sql
 -- attach a Postgres database
@@ -232,8 +242,6 @@ ATTACH 'database.db' AS ddb;
 -- export all tables and views from the Postgres database to the DuckDB file
 COPY FROM DATABASE postgres TO ddb;
 ```
-
-Note that this statement is currently only available in the development build. It will be available in the next DuckDB release (v0.10).
 
 ## Directly Opening a Database
 

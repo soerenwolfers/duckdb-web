@@ -4,36 +4,51 @@
 			<div class="footernavigation">
 				<div>
 					<h6>Documentation</h6>
-					<a href="{{ site.url }}{{ site.baseurl }}/docs/installation/">Installation</a><br/>
-					<a href="{{ site.url }}{{ site.baseurl }}/docs/sql/introduction">SQL Introduction</a><br/>
-					<a href="{{ site.url }}{{ site.baseurl }}/why_duckdb">Why DuckDB</a>
+					<a href="{% link docs/stable/index.md %}">Getting Started</a><br/>
+					<a href="{% link docs/installation/index.html %}">Installation</a><br/>
+					<a href="{% link docs/stable/guides/overview.md %}">Guides</a><br/>
+					<a href="{% link docs/stable/data/overview.md %}">Data Import</a><br/>
+					<a href="{% link docs/stable/clients/overview.md %}">Client APIs</a><br/>
+					<a href="{% link docs/stable/sql/introduction.md %}">SQL Introduction</a><br/>
+					<a href="{% link why_duckdb.md %}">Why DuckDB</a><br/>
 				</div>
 				<div>
-					<h6>Internals</h6>
-					<a href="{{ site.url }}{{ site.baseurl }}/faq">FAQs</a><br/>
-					<a href="{{ site.url }}{{ site.baseurl }}/code_of_conduct">Code of Conduct</a><br/>
-					<a href="{{ site.url }}{{ site.baseurl }}/foundation/">Foundation</a><br/>
-					<a href="{{ site.url }}{{ site.baseurl }}/trademark_guidelines">Trademark Use</a>
+					<h6>Resources</h6>
+					<a href="{% link news/index.html %}">Blog</a><br/>
+					<a href="{% link media/index.html %}">Media</a><br/>
+					<a href="{% link events/index.html %}">Events</a><br/>
+					<a href="https://shop.duckdb.org/">Webshop</a><br/>
+					<a href="{% link code_of_conduct.md %}">Code of Conduct</a><br/>
+					<a href="{% link feed.xml %}">RSS Feed</a><br/>
+					<a href="https://status.duckdb.org/">Status Page</a><br/>
+					<a href="{% link faq.md %}">FAQ</a><br/>
 				</div>
 				<div>
-					<h6>Commercial Support</h6>
+					<h6>Development</h6>
+					<a href="{% link release_calendar.md %}">Release Calendar</a><br/>
+					<a href="{% link roadmap.md %}">Roadmap</a><br/>
+					<a href="{% link docs/stable/dev/building/overview.md %}">Building DuckDB</a><br/>
+					<a href="https://github.com/duckdb/duckdb/issues">GitHub Issues</a><br/>
+				</div>
+				<div>
+					<h6>Related Sites</h6>
+					<a href="{% link foundation/index.html %}">DuckDB Foundation</a><br/>
 					<a href="https://duckdblabs.com/" target="_blank">DuckDB Labs</a><br/>
-					<a href="https://duckdblabs.com/support/" target="_blank">Support Options</a>
+					<a href="https://ducklake.select/" target="_blank">DuckLake</a>
 				</div>
 				<div>
 					<h6>Community</h6>
-					<a href="https://twitter.com/duckdb" target="_blank">X (Twitter)</a><br/>
+					<a href="https://duckdb.org/community_extensions/">Community Extensions</a><br/>
+					<a href="https://bsky.app/profile/duckdb.org" target="_blank">Bluesky</a><br/>
 					<a href="https://www.linkedin.com/company/duckdb/posts" target="_blank">LinkedIn</a><br/>
+					<a href="https://twitter.com/duckdb" target="_blank">X (Twitter)</a><br/>
 					<a href="https://discord.duckdb.org" target="_blank">Discord</a><br/>
-					<a href="https://github.com/duckdb/duckdb" target="_blank">GitHub</a><br/>
-					<a href="https://stackoverflow.com/questions/tagged/duckdb" target="_blank">Stack Overflow</a>
 				</div>
 			</div>
-			<div class="footerlogo">
-				<img src="{{ site.baseurl }}/images/DuckDB-Footer.svg" class="duckdbfooter" alt="DuckDB Logo">
-			</div>
+			<div class="footerlogo duckdb_logo"></div>
 			<div class="bottomline">
 				<div>© {{ "now" | date: "%Y" }} DuckDB Foundation, Amsterdam NL</div>
+				<div><a href="{% link trademark_guidelines.md %}">Trademark Use</a><br/></div>
 			</div>
 		</div>
 	</div>

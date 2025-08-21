@@ -12,7 +12,7 @@ if [ $# -ge 1 ] && [ $1 == "--docker" ]; then
     docker run \
         --volume "$(pwd)/..:/data" \
         --workdir /data/single-file-document \
-        pandoc/extra \
+        pandoc/extra:3.6-ubuntu \
         --defaults pandoc-configuration.yaml
 else
     pandoc --defaults pandoc-configuration.yaml

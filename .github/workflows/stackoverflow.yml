@@ -7,12 +7,12 @@ on:
 
 jobs:
   build:
-    name: Discord stackoverflow bot 
-    runs-on: ubuntu-latest
+    name: Discord Stack Overflow bot 
+    runs-on: ubuntu-22.04
     if: github.repository == 'duckdb/duckdb-web'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setting up Python
         uses: actions/setup-python@v5

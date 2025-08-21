@@ -4,17 +4,19 @@ import re
 import json
 from textwrap import shorten
 
-base_dir = 'docs'
 
 skipped_files = [
-    'docs/search.md',
-    'docs/twitter_wall.md',
-    'docs/archive',
-    'docs/test',
+    'docs/preview',
+    'docs/1.2',
+    'docs/1.1',
+    'docs/1.0',
+    'docs/0.10',
+    'docs/0.9',
+    'docs/0.8',
 ]
 
 file_list = []
-skip_types = [marko.block.HTMLBlock]
+skip_types = [marko.block.HTMLBlock, marko.inline.Image, marko.inline.InlineHTML]
 
 
 def normal_whitespace(desc: str) -> str:
@@ -37,6 +39,8 @@ def extract_text(parse_node):
 
 
 def sanitize_input(text):
+    text = re.sub(r'<.*?>', '', text)
+    text = re.sub(r'img\s+src\s+[^\s]+.*?(?=\s\w+\s|$)', ' ', text)
     return normal_whitespace(re.sub(r'[^\w\s_-]', ' ', text.lower())).strip()
 
 
@@ -49,6 +53,8 @@ def extract_blurb(parse_node):
 
 def sanitize_blurb(text):
     BLURB_THRESHOLD = 120
+    text = re.sub(r'<img\s+[^>]*>', '', text)
+    text = re.sub(r'<.*?>', '', text)
     text = text.replace('"', '').strip()
     return shorten(text, width=BLURB_THRESHOLD, placeholder='...')
 
@@ -59,6 +65,15 @@ def sanitize_category(category):
         return 'SQL'
     else:
         return category.title()
+
+
+def get_url(fname):
+    fname = '/' + fname.replace('.md', '')
+    if fname.startswith('/_posts/'):
+        url = re.sub(r'/_posts/(\d+)-(\d+)-(\d+)-(.*)', r'/\1/\2/\3/\4', fname)
+    else:
+        url = fname
+    return url
 
 
 def index_file(fname):
@@ -76,6 +91,14 @@ def index_file(fname):
     text = ''
     blurb = ''
     category = ''
+
+    if fname.startswith('docs/'):
+        content_type = 'documentation'
+    elif fname.startswith('_posts/'):
+        content_type = 'blog'
+    else:
+        content_type = 'other'
+    category = ''
     # parse header info
     lines = splits[1].split('\n')
     for line in lines:
@@ -87,6 +110,7 @@ def index_file(fname):
             continue
         if line_splits[0].strip().lower() == 'title':
             title = line_splits[1].strip()
+            title = re.sub(r'^"|"$', '', title)
         if line_splits[0].strip().lower() == 'blurb':
             blurb = sanitize_blurb(line_splits[1].strip())
         if line_splits[0].strip().lower() == 'category':
@@ -109,8 +133,9 @@ def index_file(fname):
             'title': title,
             'text': text,
             'category': category,
-            'url': '/' + fname.replace('.md', ''),
+            'url': get_url(fname),
             'blurb': blurb,
+            'type': content_type,
         }
     )
 
@@ -127,7 +152,8 @@ def index_dir(dirname):
             index_dir(full_path)
 
 
-index_dir(base_dir)
+index_dir('docs')
+index_dir('_posts')
 
 
 # extract functions
@@ -178,10 +204,11 @@ def extract_functions(text, full_path):
             + " Functions",
             'url': '/' + full_path.replace('.md', ''),
             'blurb': sanitize_blurb(desc),
+            'type': 'documentation',
         }
 
 
-function_dir = os.path.sep.join('docs/sql/functions'.split('/'))
+function_dir = os.path.sep.join('docs/stable/sql/functions'.split('/'))
 files = os.listdir(function_dir)
 files.sort()
 for file in files:
